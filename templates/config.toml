@@ -1,8 +1,15 @@
 # OpenAI Codex CLI Configuration
+model_provider = "custom"
 model = "codex-5"
 base_url = "__AI_BASE_URL__"
 api_key = "__AI_API_KEY__"
 project_doc_fallback_filenames = ["AGENTS.md", "CODEX.md"]
+
+[model_providers.custom]
+name = "custom"
+base_url = "__AI_BASE_URL__"
+api_key = "__AI_API_KEY__"
+wire_specification = "openai"
 
 [mcp_servers.company-atlassian]
 command = "mcp-atlassian"

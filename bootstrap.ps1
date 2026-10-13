@@ -461,10 +461,17 @@ if (-not (Test-Path $CodexDir) -and -not $DryRun) {
 # Sinh noi dung TOML
 $tomlLines = [System.Collections.ArrayList]@()
 $tomlLines.Add('# OpenAI Codex CLI Configuration') | Out-Null
+$tomlLines.Add('model_provider = "custom"') | Out-Null
 $tomlLines.Add('model = "codex-5"') | Out-Null
 $tomlLines.Add("base_url = `"$aiBaseUrl`"") | Out-Null
 $tomlLines.Add("api_key = `"$aiKey`"") | Out-Null
 $tomlLines.Add('project_doc_fallback_filenames = ["AGENTS.md", "CODEX.md"]') | Out-Null
+$tomlLines.Add('') | Out-Null
+$tomlLines.Add('[model_providers.custom]') | Out-Null
+$tomlLines.Add('name = "custom"') | Out-Null
+$tomlLines.Add("base_url = `"$aiBaseUrl`"") | Out-Null
+$tomlLines.Add("api_key = `"$aiKey`"") | Out-Null
+$tomlLines.Add('wire_specification = "openai"') | Out-Null
 $tomlLines.Add('') | Out-Null
 
 if ($installAtlassian) {

@@ -44,6 +44,12 @@ try {
     if (-not $tomlContent.Contains('api_key = "test-key-abc"')) {
         throw "ASSERTION FAILED: api_key mismatch in config.toml"
     }
+    if (-not $tomlContent.Contains('model_provider = "custom"')) {
+        throw "ASSERTION FAILED: model_provider custom mismatch in config.toml"
+    }
+    if (-not $tomlContent.Contains('[model_providers.custom]')) {
+        throw "ASSERTION FAILED: [model_providers.custom] missing in config.toml"
+    }
 
     foreach ($f in @("AGENTS.md", "RULES.md", "SYSTEM.md")) {
         $p = Join-Path $tempDir $f
