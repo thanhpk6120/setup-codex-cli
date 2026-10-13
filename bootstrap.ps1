@@ -534,7 +534,7 @@ if (Test-Path $CodexConfig) {
         }
     } else {
         $choice = Read-Host "[?] File cau hinh '$CodexConfig' da ton tai. Ban co muon [O]verwrite (ghi de) hay [S]kip (bo qua)? [O/s]"
-        if ($choice.Trim().ToLower() -eq 's') {
+        if (-not [string]::IsNullOrWhiteSpace($choice) -and $choice.Trim().ToLower() -eq 's') {
             Write-Host "  -> Bo qua ghi file $CodexConfig." -ForegroundColor DarkGray
         } else {
             if (-not $DryRun) {
@@ -566,7 +566,7 @@ if (-not $DryRun) {
                 Copy-Item -Path $src -Destination $dst -Force
             } else {
                 $choice = Read-Host "[?] File '$dst' da ton tai. Ban co muon [O]verwrite (ghi de) hay [S]kip (bo qua)? [O/s]"
-                if ($choice.Trim().ToLower() -eq 's') {
+                if (-not [string]::IsNullOrWhiteSpace($choice) -and $choice.Trim().ToLower() -eq 's') {
                     Write-Host "  -> Bo qua file $dst." -ForegroundColor DarkGray
                 } else {
                     $bak = "$dst.bak"

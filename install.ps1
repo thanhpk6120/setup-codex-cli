@@ -40,17 +40,21 @@ Write-Host "================================================================" -F
 Write-Host "==> Kiem tra Codex CLI trong he thong..." -ForegroundColor Cyan
 $codexCmd = Get-Command "codex" -ErrorAction SilentlyContinue
 if (-not $codexCmd) {
-    Write-Host "[!] Codex CLI chua duoc tim thay trong PATH." -ForegroundColor Yellow
-    $installPrompt = Read-Host "Codex CLI chua duoc cai dat. Ban co muon cai dat Codex CLI ngay qua npm (npm install -g @openai/codex) khong? [Y/n]"
+    Write-Host "[!] Codex CLI chua duoc cai dat trong PATH." -ForegroundColor Yellow
+    $installPrompt = ""
+    if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+        $installPrompt = "y"
+    } else {
+        $installPrompt = Read-Host "Codex CLI chua duoc cai dat. Ban co muon cai dat Codex CLI chinh goc ngay bay gio khong? [Y/n]"
+    }
     if ([string]::IsNullOrWhiteSpace($installPrompt) -or $installPrompt.Trim().ToLower() -eq 'y') {
-        Write-Host "==> Dang cai dat Codex CLI qua npm..." -ForegroundColor Cyan
+        Write-Host "==> Dang cai dat Codex CLI qua npm (npm install -g @openai/codex)..." -ForegroundColor Cyan
         try {
             npm install -g @openai/codex
             Write-Host "==> Cai dat Codex CLI hoan tat. Dang cap nhat PATH trong session hien tai..." -ForegroundColor Green
 
-            $npmPrefix = (npm prefix -g 2>$null)
             $candidatePaths = @(
-                $npmPrefix,
+                (npm prefix -g 2>$null),
                 (Join-Path $env:APPDATA "npm"),
                 (Join-Path $env:LOCALAPPDATA "Programs\codex"),
                 (Join-Path $env:USERPROFILE ".codex\bin")
@@ -65,7 +69,7 @@ if (-not $codexCmd) {
 
             $pathItems = ($env:PATH -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() }
             foreach ($cand in ($candidatePaths | Select-Object -Unique)) {
-                if ((Test-Path $cand) -and ($pathItems -notcontains $cand)) {
+                if (-not [string]::IsNullOrWhiteSpace($cand) -and (Test-Path $cand) -and ($pathItems -notcontains $cand)) {
                     $env:PATH = "$cand;$env:PATH"
                     $pathItems += $cand
                 }
@@ -92,88 +96,84 @@ Write-Host ""
 Write-Host "==> Cau hinh ket noi AI Provider..." -ForegroundColor Cyan
 $defaultAiUrl = "http://localhost:20128/v1"
 if ($env:AI_BASE_URL) { $defaultAiUrl = $env:AI_BASE_URL }
-$inputAiUrl = Read-Host "Nhap AI Base URL [Mac dinh: $defaultAiUrl]"
+$inputAiUrl = ""
+if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+    $inputAiUrl = $defaultAiUrl
+} else {
+    $inputAiUrl = Read-Host "Nhap AI Base URL [Mac dinh: $defaultAiUrl]"
+}
 $aiBaseUrl = if ([string]::IsNullOrWhiteSpace($inputAiUrl)) { $defaultAiUrl } else { $inputAiUrl.Trim() }
 
 $aiApiKey = ""
-if ($env:AI_API_KEY) { $aiApiKey = $env:AI_API_KEY }
+if (-not [string]::IsNullOrWhiteSpace($env:AI_API_KEY)) { $aiApiKey = $env:AI_API_KEY.Trim() }
 while ([string]::IsNullOrWhiteSpace($aiApiKey)) {
     if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
-        if (-not [string]::IsNullOrWhiteSpace($env:AI_API_KEY)) {
-            $aiApiKey = $env:AI_API_KEY.Trim()
-            break
-        }
         throw "Loi: Dang chay o che do non-interactive nhung AI API Key chua duoc cung cap qua bien moi truong `$env:AI_API_KEY`."
     }
-    $inputKey = Read-Host "Nhap AI API Key (Bat buoc, khong co mac dinh)"
+    $inputKey = Read-Host "Nhap AI API Key (Bat buoc)"
     if (-not [string]::IsNullOrWhiteSpace($inputKey)) {
         $aiApiKey = $inputKey.Trim()
         break
     }
-    Write-Host "Loi: AI API Key la bat buoc, khong duoc de trong. Vui long nhap lai!" -ForegroundColor Red
+    Write-Host "[!] AI API Key khong duoc de trong. Vui long nhap key." -ForegroundColor Yellow
 }
 
 # 3. Cau hinh tien ich bo sung (Memorix)
 Write-Host ""
 Write-Host "==> Cau hinh tien ich bo sung..." -ForegroundColor Cyan
-$enableMemorix = $false
-
 if ($PSBoundParameters.ContainsKey('EnableMemorix')) {
-    $enableMemorix = $true
+    $enableMemorix = $EnableMemorix.IsPresent
 } elseif ($PSBoundParameters.ContainsKey('DisableMemorix')) {
-    $enableMemorix = $false
+    $enableMemorix = -not $DisableMemorix.IsPresent
 } else {
-    $existingMemorix = Get-Command "memorix" -ErrorAction SilentlyContinue
-    if ($existingMemorix) {
-        Write-Host "==> Phat hien he thong da co san Memorix tai: $($existingMemorix.Source)" -ForegroundColor Green
-        Write-Host "==> Tu dong bat Memorix va cap nhat len phien ban moi nhat." -ForegroundColor Green
-        $enableMemorix = $true
-    } else {
-        $memorixPrompt = Read-Host "Ban co muon cai dat them tien ich Memorix (quan ly memory, reasoning, project history) khong? [y/N]"
-        if (-not [string]::IsNullOrWhiteSpace($memorixPrompt) -and $memorixPrompt.Trim().ToLower() -eq 'y') {
-            $enableMemorix = $true
-        } else {
-            $enableMemorix = $false
-        }
+    $memorixCmd = Get-Command "memorix" -ErrorAction SilentlyContinue
+    if ($memorixCmd) {
+        Write-Host "==> Da phat hien Memorix tren he thong tai: $($memorixCmd.Source)" -ForegroundColor Green
     }
+    $installMemorixPrompt = ""
+    if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) {
+        $installMemorixPrompt = "n"
+    } else {
+        $installMemorixPrompt = Read-Host "Ban co muon cai dat Memorix (MCP & Session Memory) khong? [y/N]"
+    }
+    $enableMemorix = if (-not [string]::IsNullOrWhiteSpace($installMemorixPrompt) -and $installMemorixPrompt.Trim().ToLower() -eq 'y') { $true } else { $false }
 }
 
-# 4. Tai va kich hoat bootstrap.ps1
-$tempBase = Join-Path $env:TEMP ("setup-codex-cli-" + [System.Guid]::NewGuid().ToString("N"))
-$zipFile = Join-Path $env:TEMP ("setup-codex-cli-" + [System.Guid]::NewGuid().ToString("N") + ".zip")
+$env:AI_BASE_URL = $aiBaseUrl
+$env:AI_API_KEY = $aiApiKey
+
+# 4. Tai va giai nen setup-codex-cli tu GitHub
 $zipUrl = "https://github.com/thanhpk6120/setup-codex-cli/archive/refs/heads/main.zip"
+$tempBase = Join-Path $env:TEMP ("codex-install-" + [System.Guid]::NewGuid().ToString("N"))
+$zipFile = Join-Path $env:TEMP ("codex-repo-" + [System.Guid]::NewGuid().ToString("N") + ".zip")
 
 try {
-    $localBootstrap = Join-Path $PSScriptRoot "bootstrap.ps1"
-    $bootstrapScript = ""
+    Write-Host ""
+    Write-Host "==> Downloading setup-codex-cli package from GitHub..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
 
-    if (Test-Path $localBootstrap) {
-        Write-Host "==> Su dung ma nguon cuc bo tai: $PSScriptRoot" -ForegroundColor Green
-        $bootstrapScript = $localBootstrap
-    } else {
-        Write-Host "`n==> Dang tai goi setup-codex-cli tu GitHub ($zipUrl)..." -ForegroundColor Cyan
-        Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
+    Write-Host "==> Extracting files..." -ForegroundColor Cyan
+    Expand-Archive -Path $zipFile -DestinationPath $tempBase -Force
 
-        Write-Host "==> Dang giai nen tap tin..." -ForegroundColor Cyan
-        Expand-Archive -Path $zipFile -DestinationPath $tempBase -Force
-
-        $extractedRoot = Join-Path $tempBase "setup-codex-cli-main"
-        if (-not (Test-Path $extractedRoot)) {
-            $subDirs = Get-ChildItem -Path $tempBase -Directory
-            if ($subDirs.Count -gt 0) { $extractedRoot = $subDirs[0].FullName }
-        }
-
-        $bootstrapScript = Join-Path $extractedRoot "bootstrap.ps1"
+    $extractedRoot = Join-Path $tempBase "setup-codex-cli-main"
+    if (-not (Test-Path $extractedRoot)) {
+        $found = Get-ChildItem -Directory $tempBase | Select-Object -First 1
+        if ($found) { $extractedRoot = $found.FullName }
     }
 
+    $bootstrapScript = Join-Path $extractedRoot "bootstrap.ps1"
     if (-not (Test-Path $bootstrapScript)) {
         throw "Loi: Khong tim thay bootstrap.ps1 trong goi cai dat."
     }
 
-    $env:AI_BASE_URL = $aiBaseUrl
-    $env:AI_API_KEY = $aiApiKey
+    $envFilePath = Join-Path $extractedRoot ".env"
+    $envContent = @"
+AI_BASE_URL=$aiBaseUrl
+AI_API_KEY=$aiApiKey
+"@
+    Set-Content -Path $envFilePath -Value $envContent -Encoding utf8
 
-    Write-Host "==> Kich hoat bootstrap.ps1..." -ForegroundColor Cyan
+    Write-Host "==> Launching bootstrap..." -ForegroundColor Cyan
     $bootstrapParams = @{}
     if ($PSBoundParameters.ContainsKey('Force')) { $bootstrapParams['Force'] = $Force }
     if ($PSBoundParameters.ContainsKey('OverwriteAll')) { $bootstrapParams['OverwriteAll'] = $OverwriteAll }
