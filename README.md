@@ -28,8 +28,7 @@ irm https://raw.githubusercontent.com/thanhpk6120/setup-codex-cli/main/install.p
 
 * **Thư mục cấu hình:** `~/.codex/` (tức `%USERPROFILE%\.codex\`)
 * **File cấu hình chính:** `~/.codex/config.toml`
-* **Agent Guidelines:** `~/.codex/AGENTS.md`
-* **Quy chuẩn Rules:** `~/.codex/RULES.md`
+* **Agent Guidelines:** `~/.codex/AGENTS.md` (đồng thời tạo alias `CODEX.md`)
 * **Skills nghiệp vụ:** `~/.codex/skills/`
 
 ---

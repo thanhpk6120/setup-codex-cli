@@ -51,10 +51,16 @@ try {
         throw "ASSERTION FAILED: [model_providers.custom] missing in config.toml"
     }
 
-    foreach ($f in @("AGENTS.md", "RULES.md", "SYSTEM.md")) {
+    foreach ($f in @("AGENTS.md", "CODEX.md")) {
         $p = Join-Path $tempDir $f
         if (-not (Test-Path $p)) {
             throw "ASSERTION FAILED: Missing copied static file: $p"
+        }
+    }
+    foreach ($f in @("RULES.md", "SYSTEM.md")) {
+        $p = Join-Path $tempDir $f
+        if (Test-Path $p) {
+            throw "ASSERTION FAILED: Legacy file should not exist: $p"
         }
     }
 
