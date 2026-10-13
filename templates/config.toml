@@ -2,6 +2,7 @@
 model = "codex-5"
 base_url = "__AI_BASE_URL__"
 api_key = "__AI_API_KEY__"
+project_doc_fallback_filenames = ["AGENTS.md", "CODEX.md"]
 
 [mcp_servers.company-atlassian]
 command = "mcp-atlassian"

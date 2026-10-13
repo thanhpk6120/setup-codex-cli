@@ -464,6 +464,7 @@ $tomlLines.Add('# OpenAI Codex CLI Configuration') | Out-Null
 $tomlLines.Add('model = "codex-5"') | Out-Null
 $tomlLines.Add("base_url = `"$aiBaseUrl`"") | Out-Null
 $tomlLines.Add("api_key = `"$aiKey`"") | Out-Null
+$tomlLines.Add('project_doc_fallback_filenames = ["AGENTS.md", "CODEX.md"]') | Out-Null
 $tomlLines.Add('') | Out-Null
 
 if ($installAtlassian) {
@@ -550,6 +551,12 @@ if (-not $DryRun) {
         if (Test-Path $src) {
             Copy-Item -Path $src -Destination (Join-Path $CodexDir $f) -Force
             Write-Host "  -> Copy $f sang $CodexDir" -ForegroundColor DarkGray
+        }
+        $codexMdPath = Join-Path $CodexDir "CODEX.md"
+        $agentsPath = Join-Path $CodexDir "AGENTS.md"
+        if (Test-Path $agentsPath) {
+            Copy-Item -Path $agentsPath -Destination $codexMdPath -Force
+            Write-Host "  -> Tao alias CODEX.md sang $CodexDir" -ForegroundColor DarkGray
         }
     }
     $skillsSrc = Join-Path $PSScriptRoot "skills"
